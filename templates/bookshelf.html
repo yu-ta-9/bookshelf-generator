@@ -31,9 +31,9 @@
 </style>
 
 <div class="bookshelf">
-  <table>
+  <ul>
     {{range $i, $v := .items}}
       <li><img src="{{.Item.MediumImageUrl}}" alt="{{.Item.Title}}" onerror="this.style.display = 'none';"/></li>
     {{end}}
-  </table>
+  </ul>
 </div>
