@@ -18,5 +18,4 @@ go run main.go
 
 ## Example
 
-![]
-[![Bookshelf](https://bookshelf-generator.onrender.com/)](https://github.com/yu-ta-9/bookshelf-generator)
+![](https://bookshelf-generator.onrender.com/)
