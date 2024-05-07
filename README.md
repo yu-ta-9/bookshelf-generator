@@ -8,5 +8,10 @@
 ## Getting started
 
 ```shell
+go mod tidy
 go run main.go
 ```
+
+## env
+
+- RAKUTEN_BOOKS_API_KEY: 楽天Books API key

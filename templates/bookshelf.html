@@ -1,0 +1,39 @@
+<style>
+  .bookshelf {
+    & > ul {
+      all: unset;
+      padding: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      list-style-type: none;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(208, 147, 82, 0.6),
+          rgba(192, 134, 70, 0.6) 60%,
+          rgba(208, 147, 82, 0.6)
+        ),
+        repeating-radial-gradient(
+          ellipse at 60% 500%,
+          #c08646,
+          #c08646 0.2%,
+          #d09352 0.6%,
+          #d09352 1%
+        );
+
+      & > li > img {
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+      }
+    }
+  }
+</style>
+
+<div class="bookshelf">
+  <table>
+    {{range $i, $v := .items}}
+      <li><img src="{{.Item.MediumImageUrl}}" alt="{{.Item.Title}}" onerror="this.style.display = 'none';"/></li>
+    {{end}}
+  </table>
+</div>
