@@ -32,7 +32,6 @@ func main() {
 			return
 		}
 
-		c.Writer.Header().Set("Content-Type", "image/svg+xml")
 		c.HTML(http.StatusOK, "bookshelf.html", gin.H{
 			"items": book.Items,
 		})
