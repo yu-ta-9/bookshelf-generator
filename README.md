@@ -1,5 +1,8 @@
 # bookshelf-generator
 
+- It can generate a svg of bookshelf that put on specified book.
+- You can display it on any pages composed of markdown.
+
 ## Stack
 
 - Golang
@@ -12,11 +15,17 @@ go mod tidy
 go run main.go
 ```
 
-## env
+### env
 
-- RAKUTEN_BOOKS_API_KEY: 楽天Books API key
+- RAKUTEN_BOOKS_API_KEY: Rakuten Books API key
+
+## Usage
+
+- You need to specify isbn code of any books as `isbns[]` query parameter.
+- This product can generate up to 5 items.
 
 ## Example
 
-![]
-[![Bookshelf](https://bookshelf-generator.onrender.com/)](https://github.com/yu-ta-9/bookshelf-generator)
+- shown images of specified books as below
+
+[![My bookshelf](http://localhost:8088/?isbns[]=9784798178189&isbns[]=9784774189673&isbns[]=9784274226298)]
