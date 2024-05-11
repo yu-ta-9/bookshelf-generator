@@ -63,12 +63,14 @@ type Book struct {
 func getBookData(isbns []string) ([]Book, error) {
 	key := os.Getenv("RAKUTEN_BOOKS_API_KEY")
 
-	// url := "https://api.openbd.jp/v1/get?isbn=9784798178639"
-	// url := "https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404?format=json&outOfStockFlag=1" + "&applicationId=" + key + "&isbn=" + "9784798178189" // + "&isbn[]=" + "9784774189673"
-
 	var books []Book
 
-	for _, isbn := range isbns {
+	for i, isbn := range isbns {
+		// MEMO: 最大5冊まで取得
+		if i == 5 {
+			break
+		}
+
 		var book Book
 
 		url := "https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404?format=json&outOfStockFlag=1" + "&applicationId=" + key + "&isbn=" + isbn
