@@ -37,10 +37,15 @@ func main() {
 
 	r.GET("/", func(c *gin.Context) {
 		isbns := c.QueryArray("isbns[]")
+		if len(isbns) == 0 {
+			c.JSON(http.StatusOK, gin.H{})
+			return
+		}
 
 		books, err := getBookData(isbns)
 		if err != nil {
 			fmt.Printf("error fetching book data, %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"message": "error fetching book data"})
 			return
 		}
 
@@ -51,7 +56,7 @@ func main() {
 		})
 	})
 
-	r.Run(":8088")
+	r.Run(":8080")
 }
 
 type Book struct {
