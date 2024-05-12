@@ -26,9 +26,6 @@ func init() {
 
 	// connect to redis
 	url := os.Getenv("REDIS_URL")
-
-	// TODO: debug
-	fmt.Printf("url: %v", url)
 	opts, err := redis.ParseURL(url)
 	if err != nil {
 		panic(err)
@@ -85,6 +82,7 @@ type Book struct {
 // getBookData fetches book data
 func getBookData(c *gin.Context, isbns []string) ([]Book, error) {
 	key := os.Getenv("GOOGLE_BOOKS_API_KEY")
+	referer := os.Getenv("HOST_URL")
 
 	var books []Book
 
@@ -112,35 +110,37 @@ func getBookData(c *gin.Context, isbns []string) ([]Book, error) {
 		if err != nil || val == "" {
 			url := "https://www.googleapis.com/books/v1/volumes?key=" + key + "&q=isbn:" + isbn
 
-			resp, err := http.Get(url)
+			req, err := http.NewRequest("GET", url, nil)
 			if err != nil {
-				panic(err)
+				fmt.Println("Error creating request:", err)
+				continue
+			}
+			req.Header.Set("Referer", referer)
+			client := &http.Client{}
+			resp, err := client.Do(req)
+
+			if err != nil || resp.StatusCode != http.StatusOK {
+				continue
 			}
 			defer resp.Body.Close()
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				panic(err)
+				continue
 			}
 
 			data = body
 			// MEMO: cache book data for 60 days
 			// Consider to terms, limited to a maximum of 60 days.
 			redisClient.Set(c, isbn, body, 24*time.Hour*60)
-
-			// TODO: debug
-			fmt.Printf("new data: %v", data)
 		} else {
 			data = []byte(val)
-
-			// TODO: debug
-			fmt.Printf("cache data: %v", data)
 		}
 
 		err = json.Unmarshal(data, &book)
 		if err != nil {
 			fmt.Printf("error unmarshalling book data, %v isbn = "+isbn, err)
-			break
+			continue
 		}
 
 		books = append(books, book)
