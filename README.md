@@ -12,6 +12,7 @@
 
 ```shell
 go mod tidy
+docker compose up
 go run main.go
 ```
 
