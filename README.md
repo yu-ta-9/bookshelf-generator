@@ -19,6 +19,7 @@ go run main.go
 ### env
 
 - GOOGLE_BOOKS_API_KEY: Google Books API key
+- REDIS_URL: Url of redis
 
 ## Usage
 
