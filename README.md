@@ -17,7 +17,7 @@ go run main.go
 
 ### env
 
-- RAKUTEN_BOOKS_API_KEY: Rakuten Books API key
+- GOOGLE_BOOKS_API_KEY: Google Books API key
 
 ## Usage
 

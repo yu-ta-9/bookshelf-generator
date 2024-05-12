@@ -66,7 +66,7 @@ type Book struct {
 
 // getBookData fetches book data
 func getBookData(isbns []string) ([]Book, error) {
-	key := os.Getenv("RAKUTEN_BOOKS_API_KEY")
+	key := os.Getenv("GOOGLE_BOOKS_API_KEY")
 
 	var books []Book
 
@@ -78,13 +78,16 @@ func getBookData(isbns []string) ([]Book, error) {
 
 		var book Book
 
-		url := "https://app.rakuten.co.jp/services/api/BooksBook/Search/20170404?format=json&outOfStockFlag=1" + "&applicationId=" + key + "&isbn=" + isbn
+		url := "https://www.googleapis.com/books/v1/volumes?key=" + key + "&q=isbn:" + isbn
 
+		fmt.Println(url)
 		resp, err := http.Get(url)
 		if err != nil {
 			panic(err)
 		}
 		defer resp.Body.Close()
+
+		fmt.Println(resp.Body)
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
@@ -129,26 +132,29 @@ func encode(url string) string {
 }
 
 func (book *Book) UnmarshalJSON(byte []byte) error {
-	type RakutenBook struct {
+	type GoogleBook struct {
 		Items []struct {
-			Item struct {
-				Title          string `json:"title"`
-				MediumImageUrl string `json:"mediumImageUrl"`
-			}
+			VolumeInfo struct {
+				Title string `json:"title"`
+				ImageLinks struct {
+					Medium string `json:"thumbnail"`
+				} `json:"imageLinks"`
+			} `json:"volumeInfo"`
 		} `json:"items"`
 	}
-	var rakutenBook RakutenBook
-	err := json.Unmarshal(byte, &rakutenBook)
+	var googleBook GoogleBook
+	err := json.Unmarshal(byte, &googleBook)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	if len(rakutenBook.Items) == 0 {
+	if len(googleBook.Items) == 0 {
 		return nil
 	}
 
-	book.Title = rakutenBook.Items[0].Item.Title
-	book.ImageBase64 = encode(rakutenBook.Items[0].Item.MediumImageUrl)
+
+	book.Title = googleBook.Items[0].VolumeInfo.Title
+	book.ImageBase64 = encode(googleBook.Items[0].VolumeInfo.ImageLinks.Medium)
 
 	return err
 }
