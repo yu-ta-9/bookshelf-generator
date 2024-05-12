@@ -26,6 +26,9 @@ func init() {
 
 	// connect to redis
 	url := os.Getenv("REDIS_URL")
+
+	// TODO: debug
+	fmt.Printf("url: %v", url)
 	opts, err := redis.ParseURL(url)
 	if err != nil {
 		panic(err)
@@ -124,8 +127,14 @@ func getBookData(c *gin.Context, isbns []string) ([]Book, error) {
 			// MEMO: cache book data for 60 days
 			// Consider to terms, limited to a maximum of 60 days.
 			redisClient.Set(c, isbn, body, 24*time.Hour*60)
+
+			// TODO: debug
+			fmt.Printf("new data: %v", data)
 		} else {
 			data = []byte(val)
+
+			// TODO: debug
+			fmt.Printf("cache data: %v", data)
 		}
 
 		err = json.Unmarshal(data, &book)
