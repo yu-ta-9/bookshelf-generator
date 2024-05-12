@@ -85,6 +85,15 @@ func getBookData(c *gin.Context, isbns []string) ([]Book, error) {
 
 	var books []Book
 
+	// MEMO: Use pipeline to reduce the number of round trips
+	pipe := redisClient.Pipeline()
+	cmds := map[string]*redis.StringCmd{}
+	for _, isbn := range isbns {
+		cmds[isbn] = pipe.Get(c, isbn)
+	}
+	// fetch all data at once
+	pipe.Exec(c)
+
 	for i, isbn := range isbns {
 		// MEMO: 最大5冊まで取得
 		if i == 5 {
@@ -94,7 +103,7 @@ func getBookData(c *gin.Context, isbns []string) ([]Book, error) {
 		var book Book
 		var data []byte
 
-		val, err := redisClient.Get(c, isbn).Result()
+		val, err := cmds[isbn].Result()
 
 		// MEMO: If there is no cache, get it from API
 		if err != nil || val == "" {
@@ -114,14 +123,14 @@ func getBookData(c *gin.Context, isbns []string) ([]Book, error) {
 			data = body
 			// MEMO: cache book data for 60 days
 			// Consider to terms, limited to a maximum of 60 days.
-			redisClient.Set(c, isbn, body, 24 * time.Hour * 60)
+			redisClient.Set(c, isbn, body, 24*time.Hour*60)
 		} else {
 			data = []byte(val)
 		}
 
 		err = json.Unmarshal(data, &book)
 		if err != nil {
-			fmt.Printf("error unmarshalling book data, %v isbn = " + isbn, err)
+			fmt.Printf("error unmarshalling book data, %v isbn = "+isbn, err)
 			break
 		}
 
