@@ -8,17 +8,32 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
-func main() {
+var redisClient *redis.Client
+
+func init() {
+	// load env
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Printf("Cannot load .env: %v", err)
 	}
 
+	// connect to redis
+	url := os.Getenv("REDIS_URL")
+	opts, err := redis.ParseURL(url)
+	if err != nil {
+		panic(err)
+	}
+	redisClient = redis.NewClient(opts)
+}
+
+func main() {
 	r := gin.Default()
 	// 関数の登録
 	r.SetFuncMap(template.FuncMap{
@@ -42,7 +57,7 @@ func main() {
 			return
 		}
 
-		books, err := getBookData(isbns)
+		books, err := getBookData(c, isbns)
 		if err != nil {
 			fmt.Printf("error fetching book data, %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"message": "error fetching book data"})
@@ -51,7 +66,7 @@ func main() {
 
 		c.Header("Content-Type", "image/svg+xml")
 		c.HTML(http.StatusOK, "bookshelf.html", gin.H{
-			"books": books,
+			"books":      books,
 			"bookLength": len(books),
 		})
 	})
@@ -65,7 +80,7 @@ type Book struct {
 }
 
 // getBookData fetches book data
-func getBookData(isbns []string) ([]Book, error) {
+func getBookData(c *gin.Context, isbns []string) ([]Book, error) {
 	key := os.Getenv("GOOGLE_BOOKS_API_KEY")
 
 	var books []Book
@@ -77,26 +92,37 @@ func getBookData(isbns []string) ([]Book, error) {
 		}
 
 		var book Book
+		var data []byte
 
-		url := "https://www.googleapis.com/books/v1/volumes?key=" + key + "&q=isbn:" + isbn
+		val, err := redisClient.Get(c, isbn).Result()
 
-		fmt.Println(url)
-		resp, err := http.Get(url)
-		if err != nil {
-			panic(err)
+		// MEMO: If there is no cache, get it from API
+		if err != nil || val == "" {
+			url := "https://www.googleapis.com/books/v1/volumes?key=" + key + "&q=isbn:" + isbn
+
+			resp, err := http.Get(url)
+			if err != nil {
+				panic(err)
+			}
+			defer resp.Body.Close()
+
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				panic(err)
+			}
+
+			data = body
+			// MEMO: cache book data for 60 days
+			// Consider to terms, limited to a maximum of 60 days.
+			redisClient.Set(c, isbn, body, 24 * time.Hour * 60)
+		} else {
+			data = []byte(val)
 		}
-		defer resp.Body.Close()
 
-		fmt.Println(resp.Body)
-
-		body, err := io.ReadAll(resp.Body)
+		err = json.Unmarshal(data, &book)
 		if err != nil {
-			panic(err)
-		}
-
-		err = json.Unmarshal(body, &book)
-		if err != nil {
-			panic(err)
+			fmt.Printf("error unmarshalling book data, %v isbn = " + isbn, err)
+			break
 		}
 
 		books = append(books, book)
@@ -118,16 +144,6 @@ func encode(url string) string {
 		panic(err)
 	}
 
-	// MEMO: メモ書き
-	// file, _ := os.Open(image)
-	// defer file.Close()
-
-	// fi, _ := file.Stat() //FileInfo interface
-	// size := fi.Size()    //ファイルサイズ
-
-	// data := make([]byte, size)
-	// file.Read(data)
-
 	return base64.StdEncoding.EncodeToString(image)
 }
 
@@ -135,7 +151,7 @@ func (book *Book) UnmarshalJSON(byte []byte) error {
 	type GoogleBook struct {
 		Items []struct {
 			VolumeInfo struct {
-				Title string `json:"title"`
+				Title      string `json:"title"`
 				ImageLinks struct {
 					Medium string `json:"thumbnail"`
 				} `json:"imageLinks"`
@@ -151,7 +167,6 @@ func (book *Book) UnmarshalJSON(byte []byte) error {
 	if len(googleBook.Items) == 0 {
 		return nil
 	}
-
 
 	book.Title = googleBook.Items[0].VolumeInfo.Title
 	book.ImageBase64 = encode(googleBook.Items[0].VolumeInfo.ImageLinks.Medium)
