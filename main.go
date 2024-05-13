@@ -77,6 +77,7 @@ func main() {
 type Book struct {
 	Title       string
 	ImageBase64 string
+	InfoLink    string
 }
 
 // getBookData fetches book data
@@ -173,6 +174,7 @@ func (book *Book) UnmarshalJSON(byte []byte) error {
 				ImageLinks struct {
 					Medium string `json:"thumbnail"`
 				} `json:"imageLinks"`
+				InfoLink string `json:"infoLink"`
 			} `json:"volumeInfo"`
 		} `json:"items"`
 	}
@@ -188,6 +190,7 @@ func (book *Book) UnmarshalJSON(byte []byte) error {
 
 	book.Title = googleBook.Items[0].VolumeInfo.Title
 	book.ImageBase64 = encode(googleBook.Items[0].VolumeInfo.ImageLinks.Medium)
+	book.InfoLink = googleBook.Items[0].VolumeInfo.InfoLink
 
 	return err
 }

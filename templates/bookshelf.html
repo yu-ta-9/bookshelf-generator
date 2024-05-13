@@ -37,14 +37,16 @@
     ry="8"
   >
     {{range $i, $book := .books}}
-    <image
-      x="{{add 20 (mul 100 $i)}}"
-      y="28"
-      width="100"
-      height="120"
-      xlink:href="data:image/png+xml;base64,{{$book.ImageBase64}}"
-      style="filter: url(#shadow-book)"
-    />
+    <a href="{{$book.InfoLink}}" target="_blank">
+      <image
+        x="{{add 20 (mul 100 $i)}}"
+        y="28"
+        width="100"
+        height="120"
+        xlink:href="data:image/png+xml;base64,{{$book.ImageBase64}}"
+        style="filter: url(#shadow-book)"
+      />
+    </a>
     {{end}}
   </g>
 </svg>
