@@ -54,6 +54,8 @@ func main() {
 	})
 
 	r.GET("/", func(c *gin.Context) {
+		c.Header("Cache-Control", "no-cache")
+
 		isbns := c.QueryArray("isbns[]")
 		if len(isbns) == 0 {
 			c.JSON(http.StatusOK, gin.H{})
