@@ -11,9 +11,12 @@
 ## Getting started
 
 ```shell
-go mod tidy
+go mod download
 docker compose up
 go run main.go
+
+# optional commands
+go mod tidy
 ```
 
 ### env
