@@ -114,7 +114,11 @@ func getBookData(c *gin.Context, isbns []string) ([]Book, error) {
 
 		// MEMO: If there is no cache, get it from API
 		if err != nil || val == "" {
-			url := "https://www.googleapis.com/books/v1/volumes?key=" + key + "&q=isbn:" + isbn
+			// NOTE:
+			// There is a bug in the Google Books API that find no books by ISBN.
+			// To avoid this, use the q parameter instead of the `ISBN:` not `isbn:`.
+			// https://stackoverflow.com/questions/36142556/google-books-api-not-giving-output
+			url := "https://www.googleapis.com/books/v1/volumes?key=" + key + "&q=ISBN:" + isbn
 
 			req, err := http.NewRequest("GET", url, nil)
 			if err != nil {
